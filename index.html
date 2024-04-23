@@ -11,32 +11,58 @@
     <h1>Modelo de Toxicidad</h1>
     <p>Introduce una palabra o frase para verificar su toxicidad:</p>
     <input type="text" id="textInput">
-    <button onclick="handleInput()">Verificar Toxicidad</button>
+    <button onclick="handleInput()">Verificar Toxicidad</button><br>
 
-    <!-- Importar TensorFlow.js y el modelo de toxicidad -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script> -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/toxicity"></script> -->
+    <span id="spanLoading"></span>
 
-    <script src="tensorFlowCDN.js"></script>
-    <script src="toxicityCDN.js"></script>
 
+    <div id="divResult"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.9.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/toxicity@1.2.2"></script>
     <script>
+        const divResult = document.getElementById('divResult');
+        const spanLoading = document.getElementById('spanLoading');
+
         // Función para cargar el modelo y predecir la toxicidad
         async function predictToxicity(text) {
-            const model = await toxicity.load();
+            const threhold = 0.4;
+
+            // Carga el modelo de toxicidad asincrónicamente
+            const model = await toxicity.load(threhold);
+            // Realiza la predicción de toxicidad en el texto proporcionado
             const predictions = await model.classify(text);
+            // Devuelve las predicciones
             return predictions;
         }
 
         // Función para manejar la entrada del usuario
         async function handleInput() {
+            divResult.innerHTML = '';
+            // Muestra un mensaje en la consola para indicar que se está verificando la toxicidad
+            spanLoading.innerHTML = 'Verificando toxicidad...';
             console.log('Verificando toxicidad...');
+            // Obtiene el valor del texto ingresado por el usuario desde el elemento con el id 'textInput'
             const textInput = document.getElementById('textInput').value;
+            // Realiza la predicción de toxicidad utilizando la función predictToxicity y el texto ingresado
             const predictions = await predictToxicity(textInput);
-            console.log("esta aca");
+            spanLoading.innerHTML = '';
+            console.log(predictions);
+            // Itera sobre las predicciones y muestra los resultados
             predictions.forEach(prediction => {
-                console.log(`${prediction.label}: ${prediction.results[0].match}`);
-                alert(`${prediction.label}: ${prediction.results[0].match}`);
+                // Muestra el resultado de la predicción en la consola
+                console.log(`${prediction.label}: ${JSON.stringify(prediction.results)}`);
+                // Muestra una alerta con el resultado de la predicción
+                divResult.innerHTML +=
+                    `
+                <ul>
+                    <li>
+                        ${prediction.label}: ${prediction.results[0].match}, 
+                        Verdadero:%${prediction.results[0].probabilities[1] * 100},
+                        Falso:%${prediction.results[0].probabilities[0] * 100}
+                    </li>    
+                </ul>
+                `
             });
         }
     </script>
